@@ -1,6 +1,7 @@
 package com.agile.aggrement.invoice.model;
 
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -9,7 +10,11 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -30,14 +35,22 @@ public class Invoice {
 	@Column(name = "invoice_id")
 	int invoiceId;
 
+	int invoiceNumber;
+
 	Date invoiceDate;
 
 	Double amount;
-
+	
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	String invoiceDue;
 
 	@ManyToOne
 	@JoinColumn(name = "cust_id")
+	@JsonIgnore
 	Customer custId;
+
+	@OneToMany(mappedBy = "invoiceId")
+	@JsonIgnore
+	List<InvoiceProjectDetails> invoiceProjectDetails;
 
 }

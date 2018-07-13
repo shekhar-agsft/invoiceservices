@@ -12,6 +12,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,6 +38,7 @@ public class InvoiceProjectDetails {
 	
 	String resources;
 	
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	Date period;
 	
 	String type;
@@ -43,6 +47,7 @@ public class InvoiceProjectDetails {
 	
 	@OneToOne(cascade=CascadeType.ALL, targetEntity=Invoice.class)
 	@JoinColumn(name="invoice_id")
-	int invoiceId;
+	@JsonIgnore
+	Invoice invoiceId;
 	
 }
