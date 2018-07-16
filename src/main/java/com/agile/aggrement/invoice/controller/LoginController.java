@@ -58,18 +58,18 @@ public class LoginController {
 		} else {
 			try {
 				// Return the token
-				/*if (loginService.getAuthenticatedUser(authenticationRequest) instanceof Map<?, ?>) {
+				if (loginService.getAuthenticatedUser(authenticationRequest) instanceof Map<?, ?>) {
 					@SuppressWarnings("unchecked")
 					Map<String, Object> enforceMap = (Map<String, Object>) loginService
 							.getAuthenticatedUser(authenticationRequest);
 
 					return ResponseEntity.ok(invoiceUtility.createResponseEntityDTO((Integer) enforceMap.get("status"),
 							enforceMap.get("message").toString(), enforceMap.get("body")));
-				} else {*/
+				} else {
 
 					return ResponseEntity.ok(invoiceUtility.createResponseEntityDTO(HttpStatusCodes.OK, "login.success",
 							loginService.getAuthenticatedUser(authenticationRequest)));
-				//}
+				}
 			} catch (BadCredentialsException e) {
 				return ResponseEntity.ok(invoiceUtility.createResponseEntityDTO(HttpStatusCodes.VALIDATION_ERROR,
 						"invalid password", null));

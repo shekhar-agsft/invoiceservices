@@ -1,10 +1,14 @@
 package com.agile.aggrement.invoice.controller;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
+import org.allcolor.yahp.converter.IHtmlToPdfTransformer.CConvertException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -21,6 +25,7 @@ import com.agile.aggrement.invoice.model.CustomerInvoiceResponseDTO;
 import com.agile.aggrement.invoice.model.CustomerResponseDTO;
 import com.agile.aggrement.invoice.model.Invoice;
 import com.agile.aggrement.invoice.model.InvoiceProjectDetails;
+import com.agile.aggrement.invoice.model.ProjectInvoice;
 import com.agile.aggrement.invoice.services.CustomerService;
 import com.agile.aggrement.invoice.util.HttpStatusCodes;
 import com.agile.aggrement.invoice.util.InvoiceException;
@@ -42,7 +47,7 @@ public class CustomerController {
 	@RequestMapping(value = "${api.route.customer.add}", method = RequestMethod.POST)	
 	public ResponseEntity<?> saveCustomer(
 			 @Valid @RequestBody Customer requestDTO,
-			BindingResult bindingResult) {
+			BindingResult bindingResult) throws InvoiceException {
 		if (bindingResult.hasErrors()) {
 			return ResponseEntity.ok(invoiceUtility.createResponseEntityDTO(HttpStatusCodes.VALIDATION_ERROR,
 					bindingResult.getAllErrors().get(0).getDefaultMessage(), null));
@@ -91,7 +96,7 @@ public class CustomerController {
 	
 	
 	@RequestMapping(value = "${api.route.customer.fetch}/{custId}/{invoiceId}", method = RequestMethod.GET)	
-	public ResponseEntity<?> getCustomerDetails(@PathVariable int custId,@PathVariable int invoiceId) {
+	public ResponseEntity<?> getCustomerDetails(@PathVariable int custId,@PathVariable int invoiceId) throws InvoiceException {
 		
 			log.log(Level.FINEST, "Inside general request controller");
 			CustomerResponseDTO customer = customerService.getCustomerDetails(custId,invoiceId);
@@ -145,10 +150,21 @@ public class CustomerController {
 	public ResponseEntity<?> getInvoiceDetails(@PathVariable int custId) {
 		
 			log.log(Level.FINEST, "Inside general request controller");
-			List<Invoice> invoices = customerService.getInvoiceDetails(custId);
+			List<ProjectInvoice> invoices = customerService.getInvoiceDetails(custId);
 
 			return ResponseEntity.ok(invoiceUtility.createResponseEntityDTO(HttpStatusCodes.OK,
 					"Invoice fetched successfully", invoices));
+		}
+	
+	@RequestMapping(value = "${api.route.invoice.export}/{custId}/{invoiceId}", method = RequestMethod.GET)	
+	public ResponseEntity<?> export(@PathVariable int custId, @PathVariable int invoiceId,
+			HttpServletResponse httpServletResponse) throws CConvertException, IOException, InvoiceException {
+		
+			log.log(Level.FINEST, "Inside general request controller");
+	customerService.export(custId,invoiceId, httpServletResponse);
+
+			return ResponseEntity.ok(invoiceUtility.createResponseEntityDTO(HttpStatusCodes.OK,
+					"Invoice fetched successfully", null));
 		}
 	
 }

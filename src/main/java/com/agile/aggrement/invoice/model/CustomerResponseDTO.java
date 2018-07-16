@@ -18,10 +18,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = false)
 public class CustomerResponseDTO {
 
-	
-
-	
-
 	String name;
 
 	String address;
@@ -32,17 +28,17 @@ public class CustomerResponseDTO {
 	@JsonIgnore
 	Date period;
 
-	
-	
 	int invoiceNumber;
 
 	Date invoiceDate;
 
 	Double amount;
-	
+
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	String invoiceDue;
-	
+
 	List<InvoiceProjectDetails> invoiceProjectDetails;
+
+	AccountDetails accountDetails;
 
 }
