@@ -18,6 +18,7 @@ import com.agile.aggrement.invoice.repo.CustomerRepository;
 import com.agile.aggrement.invoice.repo.InvoiceRepository;
 import com.agile.aggrement.invoice.repo.ProjectRepository;
 import com.agile.aggrement.invoice.services.CustomerService;
+import com.agile.aggrement.invoice.util.InvoiceException;
 
 import lombok.extern.java.Log;
 
@@ -42,7 +43,7 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	@Override
-	public void saveInvoice(Invoice requestDTO, int custId) {
+	public void saveInvoice(Invoice requestDTO, int custId) throws InvoiceException {
 
 		Customer customer = customerRepository.findOne(custId);
 		requestDTO.setCustId(customer);
@@ -53,6 +54,9 @@ public class CustomerServiceImpl implements CustomerService {
 		if (!invoice.isEmpty()) {
 			int size = invoice.size();
 			invoiceObj = invoice.get(size - 1);
+			if(invoiceObj.getCustId()==customer){
+				throw new InvoiceException(500,"Please add the customer first");
+			}
 		}
 		if (invoiceObj != null) {
 			invoiceNumber = invoiceObj.getInvoiceNumber();
@@ -70,6 +74,8 @@ public class CustomerServiceImpl implements CustomerService {
 	public void saveInvoiceProjects(InvoiceProjectDetails requestDTO, int invoiceId) {
 
 		Invoice invoice = invoiceRepository.findOne(invoiceId);
+		
+		
 		requestDTO.setInvoiceId(invoice);
 		projectRepository.save(requestDTO);
 
@@ -84,13 +90,25 @@ public class CustomerServiceImpl implements CustomerService {
 
 		Invoice invoice = invoiceRepository.findByInvoiceNumber(invoiceId);
 
-		List<InvoiceProjectDetails> invoiceProjectDetails = new ArrayList<>();
-		invoiceProjectDetails = projectRepository.findByInvoiceId(invoice);
-		ProjectInvoice projectInvoices = new ProjectInvoice();
-		projectInvoices.setInvoice(invoice);
-		projectInvoices.setInvoiceProjectDetails(invoiceProjectDetails);
-		customerResponseDTO.setProjectInvoices(projectInvoices);
-		customerResponseDTO.setCustomer(customer);
+		
+		customerResponseDTO.setName(customer.getName());
+		customerResponseDTO.setAddress(customer.getAddress());
+		customerResponseDTO.setPeriod(new Date());
+		customerResponseDTO.setPoagreement(customer.getPoagreement());
+		
+		customerResponseDTO.setInvoiceDate(invoice.getInvoiceDate());
+		customerResponseDTO.setInvoiceDue(invoice.getInvoiceDue());
+		customerResponseDTO.setInvoiceNumber(invoice.getInvoiceNumber());
+		customerResponseDTO.setAmount(invoice.getAmount());
+		
+		customerResponseDTO.setInvoiceNumber(invoice.getInvoiceNumber());
+		
+		
+		
+		customerResponseDTO.setInvoiceProjectDetails( projectRepository.findByInvoiceId(invoice));
+		
+		
+		
 
 		return customerResponseDTO;
 	}

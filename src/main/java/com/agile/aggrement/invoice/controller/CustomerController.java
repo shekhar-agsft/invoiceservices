@@ -23,6 +23,7 @@ import com.agile.aggrement.invoice.model.Invoice;
 import com.agile.aggrement.invoice.model.InvoiceProjectDetails;
 import com.agile.aggrement.invoice.services.CustomerService;
 import com.agile.aggrement.invoice.util.HttpStatusCodes;
+import com.agile.aggrement.invoice.util.InvoiceException;
 import com.agile.aggrement.invoice.util.InvoiceUtility;
 
 import lombok.extern.java.Log;
@@ -58,7 +59,7 @@ public class CustomerController {
 	@RequestMapping(value = "${api.route.invoice.add}/{custId}", method = RequestMethod.POST)	
 	public ResponseEntity<?> saveInvoice(@PathVariable int custId,
 			 @Valid @RequestBody Invoice requestDTO,
-			BindingResult bindingResult) {
+			BindingResult bindingResult) throws InvoiceException {
 		if (bindingResult.hasErrors()) {
 			return ResponseEntity.ok(invoiceUtility.createResponseEntityDTO(HttpStatusCodes.VALIDATION_ERROR,
 					bindingResult.getAllErrors().get(0).getDefaultMessage(), null));

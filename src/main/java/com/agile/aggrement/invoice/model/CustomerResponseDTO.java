@@ -1,6 +1,10 @@
 package com.agile.aggrement.invoice.model;
 
+import java.util.Date;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -14,9 +18,31 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = false)
 public class CustomerResponseDTO {
 
-	Customer customer;
 	
-	ProjectInvoice projectInvoices;
+
+	
+
+	String name;
+
+	String address;
+
+	String poagreement;
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonIgnore
+	Date period;
+
 	
 	
+	int invoiceNumber;
+
+	Date invoiceDate;
+
+	Double amount;
+	
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	String invoiceDue;
+	
+	List<InvoiceProjectDetails> invoiceProjectDetails;
+
 }
