@@ -23,7 +23,7 @@ public interface CustomerService {
 
 	void saveInvoice(Invoice requestDTO, int custId) throws InvoiceException;
 
-	void saveInvoiceProjects(InvoiceProjectDetails requestDTO, int invoiceId);
+	void saveInvoiceProjects(InvoiceProjectDetails requestDTO, int invoiceId) throws InvoiceException;
 
 	CustomerResponseDTO getCustomerDetails(int custId, int invoiceId) throws InvoiceException;
 
@@ -31,7 +31,7 @@ public interface CustomerService {
 
 	List<ProjectInvoice> getInvoiceDetails(int custId);
 
-	CustomerDTO getAllCustomers();
+	CustomerDTO getAllCustomers() throws InvoiceException;
 
 	Invoice getInvoice(int invoiceId);
 

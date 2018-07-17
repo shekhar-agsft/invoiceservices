@@ -4,14 +4,13 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -22,11 +21,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.allcolor.yahp.converter.CYaHPConverter;
 import org.allcolor.yahp.converter.IHtmlToPdfTransformer;
 import org.allcolor.yahp.converter.IHtmlToPdfTransformer.CConvertException;
-import org.apache.poi.util.IOUtils;
 import org.apache.velocity.app.VelocityEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
@@ -44,6 +41,7 @@ import com.agile.aggrement.invoice.repo.InvoiceRepository;
 import com.agile.aggrement.invoice.repo.ProjectRepository;
 import com.agile.aggrement.invoice.services.CustomerService;
 import com.agile.aggrement.invoice.util.InvoiceException;
+import com.agile.aggrement.invoice.util.InvoiceProjectResponseDTO;
 import com.agile.aggrement.invoice.util.VelocityUtility;
 
 import lombok.extern.java.Log;
@@ -75,12 +73,23 @@ public class CustomerServiceImpl implements CustomerService {
 
 	@Override
 	public void save(Customer requestDTO) throws InvoiceException {
-if(requestDTO!=null){
-		requestDTO.setPeriod(new Date());
-		customerRepository.save(requestDTO);
-}else{
-	throw new InvoiceException(500, "No input data");
-}
+		if (requestDTO != null) {
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(new Date());
+			String day = new Integer(cal.get(Calendar.DAY_OF_MONTH)).toString();
+			if (cal.get(Calendar.DAY_OF_MONTH) < 9) {
+				day = "0" + day;
+			}
+			String month = new Integer(cal.get(Calendar.MONTH) + 1).toString();
+			if ((cal.get(Calendar.MONTH) + 1) < 9) {
+				month = "0" + month;
+			}
+			int year = cal.get(Calendar.YEAR);
+			requestDTO.setPeriod(month + "" + year);
+			customerRepository.save(requestDTO);
+		} else {
+			throw new InvoiceException(500, "No input data");
+		}
 
 	}
 
@@ -89,7 +98,8 @@ if(requestDTO!=null){
 
 		Customer customer = customerRepository.findOne(custId);
 		requestDTO.setCustId(customer);
-		int number = 1801;
+
+		int invoiceSeries = customer.getInvoiceSeries();
 		int invoiceNumber = 0;
 		List<Invoice> invoice = (List<Invoice>) invoiceRepository.findAll();
 		Invoice invoiceObj = null;
@@ -104,21 +114,48 @@ if(requestDTO!=null){
 			invoiceNumber = invoiceObj.getInvoiceNumber();
 		}
 		if (invoiceNumber != 0) {
-			requestDTO.setInvoiceNumber(invoiceNumber + 1);
+			requestDTO.setInvoiceNumber(invoiceSeries + 1);
 		} else {
-			requestDTO.setInvoiceNumber(number);
+			requestDTO.setInvoiceNumber(invoiceSeries);
 		}
 
 		invoiceRepository.save(requestDTO);
 	}
 
 	@Override
-	public void saveInvoiceProjects(InvoiceProjectDetails requestDTO, int invoiceId) {
+	public void saveInvoiceProjects(InvoiceProjectDetails requestDTO, int invoiceId) throws InvoiceException {
 
 		Invoice invoice = invoiceRepository.findOne(invoiceId);
+		if (invoice != null) {
+			requestDTO.setInvoiceId(invoice);
+			if (invoice.getAmount() < requestDTO.getAmountBilled()) {
+				throw new InvoiceException(500, "Amount for single resource should not exceed total invoice amount");
+			}
+			List<InvoiceProjectDetails> invoiceProjectDetails = projectRepository.findByInvoiceId(invoice);
+			double totalInvoice = 0.0;
+			if (!invoiceProjectDetails.isEmpty()) {
+				for (InvoiceProjectDetails invoiceProjectDetail : invoiceProjectDetails) {
+					totalInvoice = totalInvoice + invoiceProjectDetail.getAmountBilled();
 
-		requestDTO.setInvoiceId(invoice);
-		projectRepository.save(requestDTO);
+				}
+			}
+
+			double newAmount = requestDTO.getAmountBilled() + totalInvoice;
+
+			if (newAmount > invoice.getAmount()) {
+				throw new InvoiceException(500, "Total invoice amount exceeded");
+			}
+
+			if (totalInvoice > invoice.getAmount()) {
+				throw new InvoiceException(500, "Total invoice amount exceeded");
+			}
+			if (totalInvoice == invoice.getAmount()) {
+				throw new InvoiceException(500, "Total invoice amount exceeded");
+			}
+			projectRepository.save(requestDTO);
+		} else {
+			throw new InvoiceException(500, "Please add the invoice first");
+		}
 
 	}
 
@@ -129,20 +166,20 @@ if(requestDTO!=null){
 
 		Customer customer = customerRepository.findOne(custId);
 
-		Invoice invoice = invoiceRepository.findByInvoiceNumber(invoiceId);
+		Invoice invoice = invoiceRepository.findOne(invoiceId);
 
 		customerResponseDTO.setName(customer.getName());
 		customerResponseDTO.setAddress(customer.getAddress());
 		customerResponseDTO.setPeriod(new Date());
 		customerResponseDTO.setPoagreement(customer.getPoagreement());
+		if (invoice != null) {
+			customerResponseDTO.setInvoiceDate(invoice.getInvoiceDate());
+			customerResponseDTO.setInvoiceDue(invoice.getInvoiceDue());
+			customerResponseDTO.setInvoiceNumber(invoice.getInvoiceNumber());
+			customerResponseDTO.setAmount(invoice.getAmount());
 
-		customerResponseDTO.setInvoiceDate(invoice.getInvoiceDate());
-		customerResponseDTO.setInvoiceDue(invoice.getInvoiceDue());
-		customerResponseDTO.setInvoiceNumber(invoice.getInvoiceNumber());
-		customerResponseDTO.setAmount(invoice.getAmount());
-
-		customerResponseDTO.setInvoiceNumber(invoice.getInvoiceNumber());
-
+			customerResponseDTO.setInvoiceNumber(invoice.getInvoiceNumber());
+		}
 		customerResponseDTO.setInvoiceProjectDetails(projectRepository.findByInvoiceId(invoice));
 
 		List<AccountDetails> accountDetails = (List<AccountDetails>) accountRepo.findAll();
@@ -150,13 +187,16 @@ if(requestDTO!=null){
 
 		double totalInvoice = 0.0;
 		List<InvoiceProjectDetails> invoiceProjectDetails = customerResponseDTO.getInvoiceProjectDetails();
-		for (InvoiceProjectDetails invoiceProjectDetail : invoiceProjectDetails) {
-			totalInvoice = totalInvoice + invoiceProjectDetail.getAmountBilled();
+		if (!invoiceProjectDetails.isEmpty()) {
+			for (InvoiceProjectDetails invoiceProjectDetail : invoiceProjectDetails) {
+				totalInvoice = totalInvoice + invoiceProjectDetail.getAmountBilled();
 
+			}
 		}
-		/*if (customerResponseDTO.getAmount() != totalInvoice) {
-			throw new InvoiceException(500, "Invoice amount does not match");
-		}*/
+		/*
+		 * if (customerResponseDTO.getAmount() != totalInvoice) { throw new
+		 * InvoiceException(500, "Invoice amount does not match"); }
+		 */
 		return customerResponseDTO;
 	}
 
@@ -175,22 +215,21 @@ if(requestDTO!=null){
 	@Override
 	public List<ProjectInvoice> getInvoiceDetails(int custId) {
 		Customer customer = customerRepository.findOne(custId);
-		List<InvoiceProjectDetails> invoiceProjectDetails =null;
+		List<InvoiceProjectDetails> invoiceProjectDetails = null;
 		if (customer != null) {
-			List<ProjectInvoice>  projectInvoice = new ArrayList<>();
+			List<ProjectInvoice> projectInvoice = new ArrayList<>();
 			List<Invoice> invoice = invoiceRepository.findByCustId(customer);
-			
+
 			for (Invoice invobj : invoice) {
 				ProjectInvoice projectInvoi = new ProjectInvoice();
-				 invoiceProjectDetails = projectRepository.findByInvoiceId(invobj);
-				 projectInvoi.setInvoice(invobj);
-				 projectInvoi.setInvoiceProjectDetails(invoiceProjectDetails);
-				 projectInvoice.add(projectInvoi);
+				invoiceProjectDetails = projectRepository.findByInvoiceId(invobj);
+				projectInvoi.setInvoice(invobj);
+				projectInvoi.setInvoiceProjectDetails(invoiceProjectDetails);
+				projectInvoice.add(projectInvoi);
 			}
-			
+
 			return projectInvoice;
-			
-			
+
 		} else {
 			return null;
 		}
@@ -198,11 +237,15 @@ if(requestDTO!=null){
 	}
 
 	@Override
-	public CustomerDTO getAllCustomers() {
+	public CustomerDTO getAllCustomers() throws InvoiceException {
 
 		CustomerDTO customerDTO = new CustomerDTO();
 		List<Customer> customers = (List<Customer>) customerRepository.findAll();
-		customerDTO.setCustomers(customers);
+		if (!customers.isEmpty()) {
+			customerDTO.setCustomers(customers);
+		} else {
+			throw new InvoiceException(500, "Please add the customer First");
+		}
 		return customerDTO;
 	}
 
@@ -225,7 +268,9 @@ if(requestDTO!=null){
 		customerInvoiceResponseDTO.setPeriod(new Date());
 		customerInvoiceResponseDTO.setPoagreement(customer.getPoagreement());
 		// invoice
-		int number = 1801;
+
+		int invoiceSeries = customer.getInvoiceSeries();
+
 		int invoiceNumber = 0;
 		List<Invoice> invoice = (List<Invoice>) invoiceRepository.findAll();
 		Invoice invoiceObj = null;
@@ -234,12 +279,16 @@ if(requestDTO!=null){
 			invoiceObj = invoice.get(size - 1);
 		}
 		if (invoiceObj != null) {
-			invoiceNumber = invoiceObj.getInvoiceNumber();
+			if (invoiceObj.getCustId() == customer) {
+				invoiceNumber = invoiceObj.getInvoiceNumber();
+			} else {
+				invoiceNumber = invoiceSeries + 1;
+			}
 		}
 		if (invoiceNumber != 0) {
-			customerInvoiceResponseDTO.setInvoiceNumber(invoiceNumber + 1);
+			customerInvoiceResponseDTO.setInvoiceNumber(invoiceSeries + 1);
 		} else {
-			customerInvoiceResponseDTO.setInvoiceNumber(number);
+			customerInvoiceResponseDTO.setInvoiceNumber(invoiceSeries);
 		}
 
 		return customerInvoiceResponseDTO;
@@ -268,37 +317,83 @@ if(requestDTO!=null){
 
 	}
 
-	public File generateTemplate(CustomerResponseDTO customerResponseDTO)
-			throws CConvertException, IOException {
+	public String getMonth(Date userDate) {
+
+		String[] monthName = { "January", "February", "March", "April", "May", "June", "July", "August", "September",
+				"October", "November", "December" };
+
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(userDate);
+		String day = new Integer(cal.get(Calendar.DAY_OF_MONTH)).toString();
+		if (cal.get(Calendar.DAY_OF_MONTH) < 9) {
+			day = "0" + day;
+		}
+		String month = monthName[cal.get(Calendar.MONTH)];
+		return month;
+	}
+
+	public int getYear(Date date) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		String day = new Integer(cal.get(Calendar.DAY_OF_MONTH)).toString();
+		if (cal.get(Calendar.DAY_OF_MONTH) < 9) {
+			day = "0" + day;
+		}
+		String month = new Integer(cal.get(Calendar.MONTH) + 1).toString();
+		if ((cal.get(Calendar.MONTH) + 1) < 9) {
+			month = "0" + month;
+		}
+		int year = cal.get(Calendar.YEAR);
+		return year;
+	}
+
+	public File generateTemplate(CustomerResponseDTO customerResponseDTO) throws CConvertException, IOException {
 
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put("name", customerResponseDTO.getName());
 		props.put("address", customerResponseDTO.getAddress());
 		props.put("poagreement", customerResponseDTO.getPoagreement());
 		props.put("invoiceNumber", customerResponseDTO.getInvoiceNumber());
-		props.put("period", customerResponseDTO.getPeriod());
+
+		String monthName = getMonth(customerResponseDTO.getPeriod());
+		String period = monthName + " " + getYear(customerResponseDTO.getPeriod());
+
+		props.put("period", period);
 		props.put("amount", customerResponseDTO.getAmount());
 		props.put("invoiceDue", customerResponseDTO.getInvoiceDue());
-		props.put("invoiceDate", customerResponseDTO.getInvoiceDate());
+		String strDate="";
+		if(customerResponseDTO.getInvoiceDate()!=null){
+		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");  
+	     strDate= formatter.format(customerResponseDTO.getInvoiceDate());  
+		}
+
+		
+		props.put("invoiceDate",strDate);
 		props.put("accountDetails", customerResponseDTO.getAccountDetails());
-		props.put("invoiceProjectDetails", customerResponseDTO.getInvoiceProjectDetails());
-		double totalInvoice = 0.0;
+
+		double totalInvoice = 0.0; 
+		List<InvoiceProjectResponseDTO> invoiceProject = new ArrayList<>();
 		List<InvoiceProjectDetails> invoiceProjectDetails = customerResponseDTO.getInvoiceProjectDetails();
 		for (InvoiceProjectDetails invoiceProjectDetail : invoiceProjectDetails) {
+			String month = getMonth(invoiceProjectDetail.getPeriod());
+			String perio = month + " " + getYear(invoiceProjectDetail.getPeriod());
+			InvoiceProjectResponseDTO invoiceProjectResponseDTO = new InvoiceProjectResponseDTO();
+			invoiceProjectResponseDTO.setPeriod(perio);
+			invoiceProjectResponseDTO.setProjectName(invoiceProjectDetail.getProjectName());
+			invoiceProjectResponseDTO.setResources(invoiceProjectDetail.getResources());
+			invoiceProjectResponseDTO.setType(invoiceProjectDetail.getType());
+			invoiceProjectResponseDTO.setAmountBilled(invoiceProjectDetail.getAmountBilled());
+			invoiceProject.add(invoiceProjectResponseDTO);
 			totalInvoice = totalInvoice + invoiceProjectDetail.getAmountBilled();
 
 		}
 		ClassPathResource agileLogo = new ClassPathResource("images/agile.jpeg");
-		
+		props.put("invoiceProjectDetails", invoiceProject);
+		// ByteArrayResource mainImage = new
+		// ByteArrayResource(IOUtils.toByteArray(agileLogo));
 
-		//ByteArrayResource mainImage = new ByteArrayResource(IOUtils.toByteArray(agileLogo));
-		
+		props.put("image", agileLogo);
 
-		
-
-		props.put("image",agileLogo);
-		
-	
 		props.put("totalInvoice", totalInvoice);
 
 		String pdfTemplate = velocityUtility.getTemplatetoTextUsingProps("invoice.vm", props);

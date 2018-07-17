@@ -85,14 +85,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         "/**/*.js"
                 ).permitAll()
                 .antMatchers("/login/**").permitAll()
-                .antMatchers("/getCustomerDetails/**").permitAll()
+                /*.antMatchers("/getCustomerDetails/**").permitAll()
                 .antMatchers("/getAllCustomers/**").permitAll()
                 .antMatchers("/savecustomer/**").permitAll()
                 .antMatchers("/getSingleCustomer/**").permitAll()
                 .antMatchers("/saveinvoice/**").permitAll()
                 .antMatchers("/getInvoiceForCustomer/**").permitAll()
                 .antMatchers("/saveprojects/**").permitAll()
-                .antMatchers("/export/**").permitAll()
+                .antMatchers("/export/**").permitAll()*/
                 .anyRequest().authenticated();
 		// Custom JWT based security filter
 		httpSecurity.addFilterBefore(authenticationTokenFilterBean(), UsernamePasswordAuthenticationFilter.class);
@@ -103,7 +103,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	public void configure(WebSecurity web) throws Exception {
-		web.ignoring().antMatchers("/login/**", "/saveinvoice/**","/getAllCustomers/**","/getSingleCustomer/**","/getCustomerDetails/**","/export/**");
+		//web.ignoring().antMatchers("/login/**", "/saveinvoice/**","/getAllCustomers/**","/getSingleCustomer/**","/getCustomerDetails/**","/export/**");
 		web.ignoring().antMatchers(HttpMethod.OPTIONS, "/**");	    
 	}
 	

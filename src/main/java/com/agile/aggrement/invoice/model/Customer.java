@@ -1,16 +1,15 @@
 package com.agile.aggrement.invoice.model;
 
-import java.util.Date;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.AccessLevel;
@@ -38,13 +37,14 @@ public class Customer {
 
 	String poagreement;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	/*@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")*/
 	@JsonIgnore
-	Date period;
+	String period;
 
+	int invoiceSeries;
 	
-	@OneToOne(mappedBy = "custId")
+	@OneToMany(mappedBy = "custId")
 	@JsonIgnore
-	Invoice invoice;
+	List<Invoice> invoice;
 
 }

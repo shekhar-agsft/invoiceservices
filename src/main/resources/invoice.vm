@@ -10,14 +10,14 @@
     <style>
         .invoice-header {
             height: 65px;
-            background-color: #00cdcd;
+            background-color: #DCDCDC	;
         }
 
         .header-text {
             font-size: 35px;
             font-weight: bold;
             text-align: center;
-            color: #fff;
+            color: #000;
         }
         .tble-row{
             border-bottom: 1px solid;
@@ -39,7 +39,7 @@
     <div class="container">
             <div class="invoice-header">
                     <div class="header-text">
-                        INVOICE  <img src="https://agsft.com/wp-content/uploads/2016/03/AGS-logo_trans-copy.png"></img>
+                        INVOICE <span> <img src="https://agsft.com/wp-content/uploads/2016/03/AGS-logo_trans-copy.png"></img></span>
                     </div>
 
                 </div>
@@ -59,7 +59,7 @@
                         <p>38930 Blacow Rd Ste B3</p>
                         <p>Fremont, CA 94536</p>
                     </td>
-                    <td style="padding:0;background-color: yellow">
+                    <td style="padding:0;">
                        
                         <p style="font-weight: bold;margin-top:0">
                             <span id="name">${name}</span>
@@ -79,9 +79,9 @@
                         </p>
                     </td>
                     <td >
-                        <p>Invoice Date :<span  style="background-color: yellow"> ${invoiceDate}</span> </p>
-                        <p >Invoice #:<span style="background-color: yellow">${invoiceNumber}</span> </p>
-                        <p >Invoice Amount:<span style="background-color: yellow">${amount}</span> </p>
+                        <p>Invoice Date :<span> ${invoiceDate}</span> </p>
+                        <p >Invoice #:<span>AGS${invoiceNumber}</span> </p>
+                        <p >Invoice Amount:<span>$${amount}</span> </p>
                         <p>Invoice Due:${invoiceDue}</p>
                     </td>
                 </tr>
@@ -90,7 +90,7 @@
 
         <table class="table" style="width:100%;border:1px solid">
             <thead>
-                <tr style="background: #00cdcd;color:#fff">
+                <tr style=" background-color: #DCDCDC	;">
                     <th class="tble-th">Project</th>
                     <th class="tble-th">Resources</th>
                     <th class="tble-th">Peroid</th>
@@ -99,7 +99,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr style="background-color: yellow">
+                <tr style=" background-color: #DCDCDC	;">
                    #foreach(${order} in ${invoiceProjectDetails})
 					
 					            <tr>
@@ -114,11 +114,11 @@
 					        #end
                 </tr>
                 <tr>
-                    <td style=" background-color: #00cdcd;color:#fff">Total Invoice</td>
+                    <td style="background-color: #DCDCDC	; color:#000;">Total Invoice</td>
                     <td></td>
                     <td></td>
                     <td></td>
-                    <td  style="background-color: yellow">$${totalInvoice}</td>
+                    <td  style="background-color: #DCDCDC	;">$${totalInvoice}</td>
                 </tr>
             </tbody>
         </table>
@@ -131,8 +131,8 @@
                         <p>Agile Soft Systems, Inc</p>
                         <p>38930 Blacow Rd Ste B3</p>
                         <p>Fremont, CA 94536</p>
-                        <p style=" background-color: #00cdcd;">Wells Fargo Bank Acct # :<span>123456789</span></p>
-                        <p style=" background-color: #00cdcd;">ABA #: <span>12345678</span></p>
+                        <p style=" background-color: #DCDCDC	; color:#000;">Wells Fargo Bank Acct # :<span>${accountDetails.accountNumber}</span></p>
+                        <p style=" background-color: #DCDCDC	; color:#000;">ABA #: <span>${accountDetails.infoNumber}</span></p>
                     </td>
                 </tr>
             </tbody>

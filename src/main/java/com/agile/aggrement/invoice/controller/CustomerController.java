@@ -81,7 +81,7 @@ public class CustomerController {
 	@RequestMapping(value = "${api.route.projects.add}/{invoiceId}", method = RequestMethod.POST)	
 	public ResponseEntity<?> saveProject(@PathVariable int invoiceId,
 			 @Valid @RequestBody InvoiceProjectDetails requestDTO,
-			BindingResult bindingResult) {
+			BindingResult bindingResult) throws InvoiceException {
 		if (bindingResult.hasErrors()) {
 			return ResponseEntity.ok(invoiceUtility.createResponseEntityDTO(HttpStatusCodes.VALIDATION_ERROR,
 					bindingResult.getAllErrors().get(0).getDefaultMessage(), null));
@@ -117,7 +117,7 @@ public class CustomerController {
 		}
 	
 	@RequestMapping(value = "${api.route.customer.all.fetch}", method = RequestMethod.GET)	
-	public ResponseEntity<?> getAllCustomers() {
+	public ResponseEntity<?> getAllCustomers() throws InvoiceException {
 		
 			log.log(Level.FINEST, "Inside general request controller");
 			CustomerDTO customer = customerService.getAllCustomers();
