@@ -41,7 +41,7 @@ public class Customer {
 	@JsonIgnore
 	String period;
 
-	int invoiceSeries;
+	String invoiceSeries;
 	
 	@OneToMany(mappedBy = "custId")
 	@JsonIgnore

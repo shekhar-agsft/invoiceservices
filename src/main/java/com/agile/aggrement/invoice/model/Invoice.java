@@ -35,14 +35,15 @@ public class Invoice {
 	@Column(name = "invoice_id")
 	int invoiceId;
 
-	int invoiceNumber;
-
+	String invoiceNumber;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	Date invoiceDate;
 
 	Double amount;
-	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+
 	String invoiceDue;
+
+	String period;
 
 	@ManyToOne
 	@JoinColumn(name = "cust_id")
@@ -52,5 +53,7 @@ public class Invoice {
 	@OneToMany(mappedBy = "invoiceId")
 	@JsonIgnore
 	List<InvoiceProjectDetails> invoiceProjectDetails;
+
+	
 
 }

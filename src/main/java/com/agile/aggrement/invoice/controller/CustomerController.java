@@ -95,6 +95,8 @@ public class CustomerController {
 	}
 	
 	
+	
+	
 	@RequestMapping(value = "${api.route.customer.fetch}/{custId}/{invoiceId}", method = RequestMethod.GET)	
 	public ResponseEntity<?> getCustomerDetails(@PathVariable int custId,@PathVariable int invoiceId) throws InvoiceException {
 		

@@ -37,4 +37,9 @@ public class AccountDetails {
 	
 	@Column(name = "company_name")
 	String companyName;
+	
+	String address;
+	
+	@Column(name = "cust_id")
+	int custId;
 }

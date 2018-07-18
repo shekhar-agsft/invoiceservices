@@ -22,5 +22,5 @@ public class CustomerInvoiceResponseDTO {
 	
 	Date period;
 	
-	int invoiceNumber;
+	String invoiceNumber;
 }

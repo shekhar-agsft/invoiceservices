@@ -24,11 +24,11 @@ public class CustomerResponseDTO {
 
 	String poagreement;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	
 	@JsonIgnore
-	Date period;
+	String period;
 
-	int invoiceNumber;
+	String invoiceNumber;
 
 	Date invoiceDate;
 

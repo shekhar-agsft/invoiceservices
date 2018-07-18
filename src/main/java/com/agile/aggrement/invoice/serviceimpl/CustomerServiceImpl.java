@@ -99,25 +99,48 @@ public class CustomerServiceImpl implements CustomerService {
 		Customer customer = customerRepository.findOne(custId);
 		requestDTO.setCustId(customer);
 
-		int invoiceSeries = customer.getInvoiceSeries();
-		int invoiceNumber = 0;
+		String invoiceSeries = customer.getInvoiceSeries();
+		int index = -1;
+		for (int i = 0; i < invoiceSeries.length(); i++) {
+			char c = invoiceSeries.charAt(i);
+			if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+				index = i;
+
+			}
+		}
+		String prefix = invoiceSeries.substring(0, index + 1);
+		int invoiceLastDigit = Integer.parseInt(invoiceSeries.substring(index + 1, invoiceSeries.length()));
+
+		String invoiceNumber = "";
 		List<Invoice> invoice = (List<Invoice>) invoiceRepository.findAll();
 		Invoice invoiceObj = null;
 		if (!invoice.isEmpty()) {
 			int size = invoice.size();
 			invoiceObj = invoice.get(size - 1);
-			if (invoiceObj.getCustId() == customer) {
-				throw new InvoiceException(500, "Please add the customer first");
-			}
 		}
 		if (invoiceObj != null) {
-			invoiceNumber = invoiceObj.getInvoiceNumber();
+			if (invoiceObj.getCustId() == customer) {
+
+				invoiceNumber = invoiceObj.getInvoiceNumber();
+			} else {
+				invoiceLastDigit++;
+				invoiceNumber = prefix.concat("" + invoiceLastDigit);
+			}
 		}
-		if (invoiceNumber != 0) {
-			requestDTO.setInvoiceNumber(invoiceSeries + 1);
+		if (invoiceNumber != null && !invoiceNumber.isEmpty()) {
+			int invoiceadd = invoiceLastDigit + 1;
+			requestDTO.setInvoiceNumber(prefix.concat("" + invoiceadd));
 		} else {
 			requestDTO.setInvoiceNumber(invoiceSeries);
 		}
+		/*
+		 * Calendar cal = Calendar.getInstance(); cal.setTime(new Date());
+		 * String day = new Integer(cal.get(Calendar.DAY_OF_MONTH)).toString();
+		 * if (cal.get(Calendar.DAY_OF_MONTH) < 9) { day = "0" + day; } String
+		 * month = new Integer(cal.get(Calendar.MONTH) + 1).toString(); if
+		 * ((cal.get(Calendar.MONTH) + 1) < 9) { month = "0" + month; } int year
+		 * = cal.get(Calendar.YEAR);
+		 */
 
 		invoiceRepository.save(requestDTO);
 	}
@@ -128,9 +151,12 @@ public class CustomerServiceImpl implements CustomerService {
 		Invoice invoice = invoiceRepository.findOne(invoiceId);
 		if (invoice != null) {
 			requestDTO.setInvoiceId(invoice);
-			if (invoice.getAmount() < requestDTO.getAmountBilled()) {
-				throw new InvoiceException(500, "Amount for single resource should not exceed total invoice amount");
-			}
+			/*
+			 * if (invoice.getAmount() < requestDTO.getAmountBilled()) { throw
+			 * new InvoiceException(500,
+			 * "Amount for single resource should not exceed total invoice amount"
+			 * ); }
+			 */
 			List<InvoiceProjectDetails> invoiceProjectDetails = projectRepository.findByInvoiceId(invoice);
 			double totalInvoice = 0.0;
 			if (!invoiceProjectDetails.isEmpty()) {
@@ -142,16 +168,18 @@ public class CustomerServiceImpl implements CustomerService {
 
 			double newAmount = requestDTO.getAmountBilled() + totalInvoice;
 
-			if (newAmount > invoice.getAmount()) {
-				throw new InvoiceException(500, "Total invoice amount exceeded");
-			}
+			invoice.setAmount(newAmount);
+			invoiceRepository.save(invoice);
 
-			if (totalInvoice > invoice.getAmount()) {
-				throw new InvoiceException(500, "Total invoice amount exceeded");
-			}
-			if (totalInvoice == invoice.getAmount()) {
-				throw new InvoiceException(500, "Total invoice amount exceeded");
-			}
+			/*
+			 * if (newAmount > invoice.getAmount()) { throw new
+			 * InvoiceException(500, "Total invoice amount exceeded"); }
+			 * 
+			 * if (totalInvoice > invoice.getAmount()) { throw new
+			 * InvoiceException(500, "Total invoice amount exceeded"); } if
+			 * (totalInvoice == invoice.getAmount()) { throw new
+			 * InvoiceException(500, "Total invoice amount exceeded"); }
+			 */
 			projectRepository.save(requestDTO);
 		} else {
 			throw new InvoiceException(500, "Please add the invoice first");
@@ -170,7 +198,7 @@ public class CustomerServiceImpl implements CustomerService {
 
 		customerResponseDTO.setName(customer.getName());
 		customerResponseDTO.setAddress(customer.getAddress());
-		customerResponseDTO.setPeriod(new Date());
+		customerResponseDTO.setPeriod(invoice.getPeriod());
 		customerResponseDTO.setPoagreement(customer.getPoagreement());
 		if (invoice != null) {
 			customerResponseDTO.setInvoiceDate(invoice.getInvoiceDate());
@@ -180,19 +208,14 @@ public class CustomerServiceImpl implements CustomerService {
 
 			customerResponseDTO.setInvoiceNumber(invoice.getInvoiceNumber());
 		}
+
 		customerResponseDTO.setInvoiceProjectDetails(projectRepository.findByInvoiceId(invoice));
 
 		List<AccountDetails> accountDetails = (List<AccountDetails>) accountRepo.findAll();
+		AccountDetails accountDetail = accountDetails.get(0);
+
 		customerResponseDTO.setAccountDetails(accountDetails.get(0));
 
-		double totalInvoice = 0.0;
-		List<InvoiceProjectDetails> invoiceProjectDetails = customerResponseDTO.getInvoiceProjectDetails();
-		if (!invoiceProjectDetails.isEmpty()) {
-			for (InvoiceProjectDetails invoiceProjectDetail : invoiceProjectDetails) {
-				totalInvoice = totalInvoice + invoiceProjectDetail.getAmountBilled();
-
-			}
-		}
 		/*
 		 * if (customerResponseDTO.getAmount() != totalInvoice) { throw new
 		 * InvoiceException(500, "Invoice amount does not match"); }
@@ -269,9 +292,23 @@ public class CustomerServiceImpl implements CustomerService {
 		customerInvoiceResponseDTO.setPoagreement(customer.getPoagreement());
 		// invoice
 
-		int invoiceSeries = customer.getInvoiceSeries();
+		String invoiceSeries = customer.getInvoiceSeries();
+		int index = -1;
+		System.out.println(index);
+		for (int i = 0; i < invoiceSeries.length(); i++) {
+			char c = invoiceSeries.charAt(i);
+			if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+				index = i;
 
-		int invoiceNumber = 0;
+			}
+		}
+		System.out.println(index);
+
+		String prefix = invoiceSeries.substring(0, index + 1);
+		System.out.println(prefix);
+		int invoiceLastDigit = Integer.parseInt(invoiceSeries.substring(index + 1, invoiceSeries.length()));
+
+		String invoiceNumber = "";
 		List<Invoice> invoice = (List<Invoice>) invoiceRepository.findAll();
 		Invoice invoiceObj = null;
 		if (!invoice.isEmpty()) {
@@ -280,13 +317,16 @@ public class CustomerServiceImpl implements CustomerService {
 		}
 		if (invoiceObj != null) {
 			if (invoiceObj.getCustId() == customer) {
+
 				invoiceNumber = invoiceObj.getInvoiceNumber();
 			} else {
-				invoiceNumber = invoiceSeries + 1;
+				invoiceLastDigit++;
+				invoiceNumber = prefix.concat("" + invoiceLastDigit);
 			}
 		}
-		if (invoiceNumber != 0) {
-			customerInvoiceResponseDTO.setInvoiceNumber(invoiceSeries + 1);
+		if (invoiceNumber != null && !invoiceNumber.isEmpty()) {
+			int invoiceadd = invoiceLastDigit + 1;
+			customerInvoiceResponseDTO.setInvoiceNumber(prefix.concat("" + invoiceadd));
 		} else {
 			customerInvoiceResponseDTO.setInvoiceNumber(invoiceSeries);
 		}
@@ -355,23 +395,19 @@ public class CustomerServiceImpl implements CustomerService {
 		props.put("poagreement", customerResponseDTO.getPoagreement());
 		props.put("invoiceNumber", customerResponseDTO.getInvoiceNumber());
 
-		String monthName = getMonth(customerResponseDTO.getPeriod());
-		String period = monthName + " " + getYear(customerResponseDTO.getPeriod());
-
-		props.put("period", period);
+		props.put("period", customerResponseDTO.getPeriod());
 		props.put("amount", customerResponseDTO.getAmount());
 		props.put("invoiceDue", customerResponseDTO.getInvoiceDue());
-		String strDate="";
-		if(customerResponseDTO.getInvoiceDate()!=null){
-		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");  
-	     strDate= formatter.format(customerResponseDTO.getInvoiceDate());  
+		String strDate = "";
+		if (customerResponseDTO.getInvoiceDate() != null) {
+			SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+			strDate = formatter.format(customerResponseDTO.getInvoiceDate());
 		}
 
-		
-		props.put("invoiceDate",strDate);
+		props.put("invoiceDate", strDate);
 		props.put("accountDetails", customerResponseDTO.getAccountDetails());
 
-		double totalInvoice = 0.0; 
+		double totalInvoice = 0.0;
 		List<InvoiceProjectResponseDTO> invoiceProject = new ArrayList<>();
 		List<InvoiceProjectDetails> invoiceProjectDetails = customerResponseDTO.getInvoiceProjectDetails();
 		for (InvoiceProjectDetails invoiceProjectDetail : invoiceProjectDetails) {

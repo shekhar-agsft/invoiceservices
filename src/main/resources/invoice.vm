@@ -19,15 +19,15 @@
             text-align: center;
             color: #000;
         }
-        .tble-row{
-            border-bottom: 1px solid;
+      
+        .tble-td ,.tble-th{
+          
+            padding: 6px;
+            border-bottom: 1px solid #ddd;
+
+        
         }
-        .tble-td{
-            border-bottom: 1px solid;
-        }
-        .tble-th{
-            border-bottom: 1px solid;
-        }
+        
          .image {
             height: 110px
         }
@@ -45,26 +45,23 @@
                 </div>
         <table class="table" style="width:100%">
             <tbody>
+            
                 <tr>
-                    <td>
+                    <td style="width:70%">
                    
-                  
+                        <p style="font-weight: bold;    margin-bottom: 0;">Agile Soft Systmes, Inc</p>
+                        <p style="    margin-top: 0;
+                        margin-bottom: 0;">38930 Blacow Rd Ste B3</p>
+                        <p style="    margin-top: 0;
+                        margin-bottom: 0;">Fremont, CA 94536</p>
                     </td>
-                    <td> <p style="font-weight: bold;margin-bottom:0">Bill To</p></td>
-                </tr>
-                <tr>
-                    <td >
-                   
-                        <p style="font-weight: bold">Agile Soft Systmes, Inc</p>
-                        <p>38930 Blacow Rd Ste B3</p>
-                        <p>Fremont, CA 94536</p>
-                    </td>
+    
                     <td style="padding:0;">
-                       
-                        <p style="font-weight: bold;margin-top:0">
+                       <p style="font-weight: bold ;margin-bottom: 0;">Bill To</p>
+                        <p style="font-weight: bold;margin-bottom:0;margin-top: 0;">
                             <span id="name">${name}</span>
                         </p>
-                        <p>
+                        <p style="margin-top: 0;">
                             <span id="address1"> ${address}</span>
                         </p>
                     </td>
@@ -72,23 +69,29 @@
                 </tr>
 
                 <tr>
-                    <td>
-                        <p>PO/Agreement #:   <span id="poagreement"> ${poagreement}</span> </p>
-                        <p>Period:
+                    <td style="width:70%">
+                        <label>PO/Agreement #:   <span id="poagreement"> ${poagreement}</span> </label>
+                        <br>
+                        <label>Period:
                             <span>${period}</span>
-                        </p>
+                        </label>
+                      
                     </td>
+                    
                     <td >
-                        <p>Invoice Date :<span> ${invoiceDate}</span> </p>
-                        <p >Invoice #:<span>AGS${invoiceNumber}</span> </p>
-                        <p >Invoice Amount:<span>$${amount}</span> </p>
-                        <p>Invoice Due:${invoiceDue}</p>
+                        <label>Invoice Date :<span> ${invoiceDate}</span> </label>
+                        <br>
+                        <label >Invoice #:<span>AGS${invoiceNumber}</span> </label>
+                        <br>
+                        <label >Invoice Amount:<span>$${amount}</span> </label>
+                        <br>
+                        <label>Invoice Due:${invoiceDue}</label>
                     </td>
                 </tr>
             </tbody>
         </table>
 
-        <table class="table" style="width:100%;border:1px solid">
+        <table class="table" style="width:100%;">
             <thead>
                 <tr style=" background-color: #DCDCDC	;">
                     <th class="tble-th">Project</th>
@@ -114,11 +117,11 @@
 					        #end
                 </tr>
                 <tr>
-                    <td style="background-color: #DCDCDC	; color:#000;">Total Invoice</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td  style="background-color: #DCDCDC	;">$${totalInvoice}</td>
+                    <td class="tble-td" style="background-color: #DCDCDC	; color:#000;">Total Invoice</td>
+                    <td class="tble-td"></td>
+                    <td class="tble-td"></td>
+                    <td class="tble-td"></td>
+                    <td class="tble-td"  style="background-color: #DCDCDC	;">$${totalInvoice}</td>
                 </tr>
             </tbody>
         </table>
@@ -127,12 +130,12 @@
             <tbody>
                 <tr>
                     <td>
-                        <p style="font-weight: bold">Pay through Wells Fargo Bank:</p>
-                        <p>Agile Soft Systems, Inc</p>
-                        <p>38930 Blacow Rd Ste B3</p>
-                        <p>Fremont, CA 94536</p>
-                        <p style=" background-color: #DCDCDC	; color:#000;">Wells Fargo Bank Acct # :<span>${accountDetails.accountNumber}</span></p>
-                        <p style=" background-color: #DCDCDC	; color:#000;">ABA #: <span>${accountDetails.infoNumber}</span></p>
+                        <p style="font-weight: bold">Pay through ${accountDetails.bankName} Bank:</p>
+                        <p style="margin-bottom:0;">${accountDetails.companyName}</p>
+                        <p style="margin-bottom:0;margin-top:0">${accountDetails.address}</p>
+                       
+                        <p style=" background-color: #DCDCDC	; color:#000;margin-bottom:0;margin-top:0">${accountDetails.bankName} Bank Acct # :<span>${accountDetails.accountNumber}</span></p>
+                        <p style=" background-color: #DCDCDC	; color:#000;margin-bottom:0;margin-top:0">ABA #: <span>${accountDetails.infoNumber}</span></p>
                     </td>
                 </tr>
             </tbody>
