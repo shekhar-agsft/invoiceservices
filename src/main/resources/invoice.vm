@@ -37,12 +37,15 @@
 
 <body>
     <div class="container">
+     
             <div class="invoice-header">
+          
                     <div class="header-text">
-                        INVOICE <span> <img src="https://agsft.com/wp-content/uploads/2016/03/AGS-logo_trans-copy.png"></img></span>
+                      </img>INVOICE 
                     </div>
 
                 </div>
+                <div style="height:30%;"><img src="${agileLogo}" style="width:10%"></div>
         <table class="table" style="width:100%">
             <tbody>
             
@@ -81,7 +84,7 @@
                     <td >
                         <label>Invoice Date :<span> ${invoiceDate}</span> </label>
                         <br>
-                        <label >Invoice #:<span>AGS${invoiceNumber}</span> </label>
+                        <label >Invoice #:<span>${invoiceNumber}</span> </label>
                         <br>
                         <label >Invoice Amount:<span>$${amount}</span> </label>
                         <br>

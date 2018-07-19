@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -21,9 +22,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.allcolor.yahp.converter.CYaHPConverter;
 import org.allcolor.yahp.converter.IHtmlToPdfTransformer;
 import org.allcolor.yahp.converter.IHtmlToPdfTransformer.CConvertException;
+import org.apache.poi.util.IOUtils;
 import org.apache.velocity.app.VelocityEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
@@ -86,6 +89,28 @@ public class CustomerServiceImpl implements CustomerService {
 			}
 			int year = cal.get(Calendar.YEAR);
 			requestDTO.setPeriod(month + "" + year);
+
+			if (requestDTO.getInvoiceSeries() != null && !requestDTO.getInvoiceSeries().isEmpty()) {
+
+				int index = -1;
+				for (int i = 0; i < requestDTO.getInvoiceSeries().length(); i++) {
+					char c = requestDTO.getInvoiceSeries().charAt(i);
+					if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+						index = i;
+
+					}
+				}
+				if (index == requestDTO.getInvoiceSeries().length() - 1) {
+					throw new InvoiceException(500, "Last unit should be digit in invoice series");
+				}
+				if (index == -1) {
+					throw new InvoiceException(500, "Atleast one charcter should be there in invoice series");
+				}
+
+			} else {
+				throw new InvoiceException(500, "Please add the invoice series");
+			}
+
 			customerRepository.save(requestDTO);
 		} else {
 			throw new InvoiceException(500, "No input data");
@@ -94,23 +119,85 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	@Override
+	public void update(Customer requestDTO, int custId) throws InvoiceException {
+
+		if (requestDTO != null) {
+			if (custId != 0) {
+				Customer customer = customerRepository.findOne(custId);
+				Calendar cal = Calendar.getInstance();
+				cal.setTime(new Date());
+				String day = new Integer(cal.get(Calendar.DAY_OF_MONTH)).toString();
+				if (cal.get(Calendar.DAY_OF_MONTH) < 9) {
+					day = "0" + day;
+				}
+				String month = new Integer(cal.get(Calendar.MONTH) + 1).toString();
+				if ((cal.get(Calendar.MONTH) + 1) < 9) {
+					month = "0" + month;
+				}
+				int year = cal.get(Calendar.YEAR);
+				requestDTO.setPeriod(month + "" + year);
+
+				if (requestDTO.getInvoiceSeries() != null && !requestDTO.getInvoiceSeries().isEmpty()) {
+
+					int index = -1;
+					for (int i = 0; i < requestDTO.getInvoiceSeries().length(); i++) {
+						char c = requestDTO.getInvoiceSeries().charAt(i);
+						if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+							index = i;
+
+						}
+					}
+					if (index == requestDTO.getInvoiceSeries().length() - 1) {
+						throw new InvoiceException(500, "Last unit should be digit in invoice series");
+					}
+					if (index == -1) {
+						throw new InvoiceException(500, "Atleast one charcter should be there in invoice series");
+					}
+
+				} else {
+					throw new InvoiceException(500, "Please add the invoice series");
+				}
+				customer.setAddress(requestDTO.getAddress());
+				customer.setInvoiceSeries(requestDTO.getInvoiceSeries());
+				customer.setName(requestDTO.getName());
+				customer.setPoagreement(requestDTO.getPoagreement());
+				customerRepository.save(customer);
+
+			} else {
+				throw new InvoiceException(500, "Please provide custID");
+			}
+
+		} else {
+			throw new InvoiceException(500, "No input data");
+		}
+	}
+
+	@Override
 	public void saveInvoice(Invoice requestDTO, int custId) throws InvoiceException {
 
 		Customer customer = customerRepository.findOne(custId);
 		requestDTO.setCustId(customer);
-
+		int invoiceLastDigit = 0;
+		String prefix = "";
 		String invoiceSeries = customer.getInvoiceSeries();
-		int index = -1;
-		for (int i = 0; i < invoiceSeries.length(); i++) {
-			char c = invoiceSeries.charAt(i);
-			if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
-				index = i;
+		if (invoiceSeries != null && !invoiceSeries.isEmpty()) {
 
+			int index = -1;
+			for (int i = 0; i < invoiceSeries.length(); i++) {
+				char c = invoiceSeries.charAt(i);
+				if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+					index = i;
+
+				}
 			}
+			if (index == invoiceSeries.length()) {
+				throw new InvoiceException(500, "Last unit should be digit in invoice series");
+			}
+			prefix = invoiceSeries.substring(0, index + 1);
+			invoiceLastDigit = Integer.parseInt(invoiceSeries.substring(index + 1, invoiceSeries.length()));
+		} else {
+			throw new InvoiceException(500, "Please add the invoice series");
 		}
-		String prefix = invoiceSeries.substring(0, index + 1);
-		int invoiceLastDigit = Integer.parseInt(invoiceSeries.substring(index + 1, invoiceSeries.length()));
-
 		String invoiceNumber = "";
 		List<Invoice> invoice = (List<Invoice>) invoiceRepository.findAll();
 		Invoice invoiceObj = null;
@@ -133,14 +220,6 @@ public class CustomerServiceImpl implements CustomerService {
 		} else {
 			requestDTO.setInvoiceNumber(invoiceSeries);
 		}
-		/*
-		 * Calendar cal = Calendar.getInstance(); cal.setTime(new Date());
-		 * String day = new Integer(cal.get(Calendar.DAY_OF_MONTH)).toString();
-		 * if (cal.get(Calendar.DAY_OF_MONTH) < 9) { day = "0" + day; } String
-		 * month = new Integer(cal.get(Calendar.MONTH) + 1).toString(); if
-		 * ((cal.get(Calendar.MONTH) + 1) < 9) { month = "0" + month; } int year
-		 * = cal.get(Calendar.YEAR);
-		 */
 
 		invoiceRepository.save(requestDTO);
 	}
@@ -151,12 +230,7 @@ public class CustomerServiceImpl implements CustomerService {
 		Invoice invoice = invoiceRepository.findOne(invoiceId);
 		if (invoice != null) {
 			requestDTO.setInvoiceId(invoice);
-			/*
-			 * if (invoice.getAmount() < requestDTO.getAmountBilled()) { throw
-			 * new InvoiceException(500,
-			 * "Amount for single resource should not exceed total invoice amount"
-			 * ); }
-			 */
+
 			List<InvoiceProjectDetails> invoiceProjectDetails = projectRepository.findByInvoiceId(invoice);
 			double totalInvoice = 0.0;
 			if (!invoiceProjectDetails.isEmpty()) {
@@ -171,15 +245,6 @@ public class CustomerServiceImpl implements CustomerService {
 			invoice.setAmount(newAmount);
 			invoiceRepository.save(invoice);
 
-			/*
-			 * if (newAmount > invoice.getAmount()) { throw new
-			 * InvoiceException(500, "Total invoice amount exceeded"); }
-			 * 
-			 * if (totalInvoice > invoice.getAmount()) { throw new
-			 * InvoiceException(500, "Total invoice amount exceeded"); } if
-			 * (totalInvoice == invoice.getAmount()) { throw new
-			 * InvoiceException(500, "Total invoice amount exceeded"); }
-			 */
 			projectRepository.save(requestDTO);
 		} else {
 			throw new InvoiceException(500, "Please add the invoice first");
@@ -213,26 +278,23 @@ public class CustomerServiceImpl implements CustomerService {
 
 		List<AccountDetails> accountDetails = (List<AccountDetails>) accountRepo.findAll();
 		AccountDetails accountDetail = accountDetails.get(0);
+		if (accountDetail != null)
+			customerResponseDTO.setAccountDetails(accountDetail);
 
-		customerResponseDTO.setAccountDetails(accountDetails.get(0));
-
-		/*
-		 * if (customerResponseDTO.getAmount() != totalInvoice) { throw new
-		 * InvoiceException(500, "Invoice amount does not match"); }
-		 */
 		return customerResponseDTO;
 	}
 
 	@Override
-	public List<InvoiceProjectDetails> getProjectDetails(int invoiceNumber) {
+	public List<InvoiceProjectDetails> getProjectDetails(int invoiceId) throws InvoiceException {
 
-		if (invoiceNumber != 0) {
-			Invoice invoice = invoiceRepository.findByInvoiceNumber(invoiceNumber);
+		if (invoiceId != 0) {
+			Invoice invoice = invoiceRepository.findOne(invoiceId);
 			List<InvoiceProjectDetails> invoiceProjectDetails = projectRepository.findByInvoiceId(invoice);
 			return invoiceProjectDetails;
+		} else {
+			throw new InvoiceException(500, "Please provide invoice Number");
 		}
 
-		return null;
 	}
 
 	@Override
@@ -273,9 +335,13 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	@Override
-	public Invoice getInvoice(int invoiceId) {
+	public Invoice getInvoice(int invoiceId) throws InvoiceException {
 
-		return invoiceRepository.findByInvoiceNumber(invoiceId);
+		if (invoiceId != 0) {
+			return invoiceRepository.findOne(invoiceId);
+		} else {
+			throw new InvoiceException(500, "Please provide invoice Id");
+		}
 
 	}
 
@@ -319,9 +385,6 @@ public class CustomerServiceImpl implements CustomerService {
 			if (invoiceObj.getCustId() == customer) {
 
 				invoiceNumber = invoiceObj.getInvoiceNumber();
-			} else {
-				invoiceLastDigit++;
-				invoiceNumber = prefix.concat("" + invoiceLastDigit);
 			}
 		}
 		if (invoiceNumber != null && !invoiceNumber.isEmpty()) {
@@ -423,12 +486,15 @@ public class CustomerServiceImpl implements CustomerService {
 			totalInvoice = totalInvoice + invoiceProjectDetail.getAmountBilled();
 
 		}
-		ClassPathResource agileLogo = new ClassPathResource("images/agile.jpeg");
+		ClassPathResource agileLogo = new ClassPathResource("classpath:images/agile.jpeg");
+		// ClassPathResource wazooDualLogo = new
+		// ClassPathResource("classpath:images/logo.png");
+
 		props.put("invoiceProjectDetails", invoiceProject);
 		// ByteArrayResource mainImage = new
 		// ByteArrayResource(IOUtils.toByteArray(agileLogo));
 
-		props.put("image", agileLogo);
+		props.put("agileLogo", agileLogo.getPath());
 
 		props.put("totalInvoice", totalInvoice);
 

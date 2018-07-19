@@ -16,6 +16,6 @@ public interface InvoiceRepository extends CrudRepository<Invoice, Integer> {
 	@Query(value = "SELECT * FROM invoice t where t.cust_id = :custId", nativeQuery = true)
 	public List<Invoice> findByCustId(@Param("custId") Customer custId);
 
-	@Query(value = "SELECT * FROM invoice t where t.invoice_number = :invoiceNumber", nativeQuery = true)
-	public Invoice findByInvoiceNumber(@Param("invoiceNumber")int invoiceNumber);
+	/*@Query(value = "SELECT * FROM invoice t where t.invoice_number = :invoiceNumber", nativeQuery = true)
+	public Invoice findByInvoiceNumber(@Param("invoiceNumber")int invoiceNumber);*/
 }
